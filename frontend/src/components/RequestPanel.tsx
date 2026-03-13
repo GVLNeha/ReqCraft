@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { Send, ChevronDown, ChevronUp } from "lucide-react";
-import { MethodBadge } from "./MethodBadge";
 import { CodeSnippetViewer } from "./CodeSnippetViewer";
 import type { GeneratedRequest } from "../types";
 
@@ -11,55 +10,97 @@ interface Props {
   isExecuting: boolean;
 }
 
+function MethodBadge({ method }: { method: string }) {
+  return (
+    <span className={`rc-method-badge ${method.toUpperCase()}`}>
+      {method.toUpperCase()}
+    </span>
+  );
+}
+
 export function RequestPanel({ request, onExecute, isExecuting }: Props) {
   const [showHeaders, setShowHeaders] = useState(false);
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Method + URL */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/10">
+    <div className="rc-panel">
+
+      {/* ── Method + URL ─────────────────────────────────── */}
+      <div className="rc-method-row">
         <MethodBadge method={request.method} />
-        <span className="font-mono text-sm text-white/90 break-all">{request.url}</span>
+        <span className="rc-url">{request.url}</span>
       </div>
 
-      {/* Headers */}
-      <div className="rounded-xl border border-white/10 overflow-hidden">
+      {/* ── Headers (collapsible) ─────────────────────────── */}
+      <div style={{ borderBottom: "1px solid var(--border)" }}>
         <button
           onClick={() => setShowHeaders((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm text-white/60 hover:text-white/80 hover:bg-white/[0.02] transition-all"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "10px 16px",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.72rem",
+            color: "var(--muted)",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = "var(--surface2)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         >
-          <span className="font-mono">
+          <span>
             Headers{" "}
-            <span className="text-white/30 text-xs">
+            <span style={{ color: "var(--soft)", fontSize: "0.65rem" }}>
               ({Object.keys(request.headers).length})
             </span>
           </span>
-          {showHeaders ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showHeaders
+            ? <ChevronUp size={13} style={{ color: "var(--soft)" }} />
+            : <ChevronDown size={13} style={{ color: "var(--soft)" }} />}
         </button>
+
         {showHeaders && (
-          <div className="border-t border-white/10 px-4 py-3 space-y-2">
+          <div style={{
+            borderTop: "1px solid var(--border)",
+            padding: "12px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            background: "var(--bg)",
+          }}>
             {Object.entries(request.headers).map(([k, v]) => (
-              <div key={k} className="flex gap-3 font-mono text-xs">
-                <span className="text-[#00E5CC]/80 min-w-[160px]">{k}</span>
-                <span className="text-white/60">{v}</span>
+              <div key={k} style={{ display: "flex", gap: "12px", fontFamily: "var(--font-mono)", fontSize: "0.72rem" }}>
+                <span style={{ color: "var(--accent)", minWidth: "160px", flexShrink: 0 }}>{k}</span>
+                <span style={{ color: "var(--muted)" }}>{v}</span>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Body */}
+      {/* ── Body ─────────────────────────────────────────── */}
       {request.body && (
-        <div className="rounded-xl border border-white/10 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
-            <span className="text-xs font-mono text-white/50">Request Body</span>
-            <span className="text-xs font-mono text-white/30">JSON</span>
+        <div style={{ borderBottom: "1px solid var(--border)" }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "9px 16px", borderBottom: "1px solid var(--border)",
+            background: "var(--surface2)",
+          }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--soft)" }}>
+              Request Body
+            </span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", color: "var(--border2)" }}>
+              JSON
+            </span>
           </div>
           <Editor
             height="160px"
             language="json"
             value={JSON.stringify(request.body, null, 2)}
-            theme="vs-dark"
+            theme="light"
             options={{
               readOnly: true,
               minimap: { enabled: false },
@@ -76,30 +117,42 @@ export function RequestPanel({ request, onExecute, isExecuting }: Props) {
         </div>
       )}
 
-      {/* Code snippets */}
-      <div>
-        <p className="text-xs font-mono text-white/40 mb-2 px-1">Code Snippets</p>
-        <CodeSnippetViewer snippets={request.code_snippets} />
+      {/* ── Code Snippets ─────────────────────────────────── */}
+      <div style={{ borderBottom: "1px solid var(--border)" }}>
+        <div style={{
+          padding: "9px 16px",
+          background: "var(--surface2)",
+          borderBottom: "1px solid var(--border)",
+          fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--soft)",
+        }}>
+          Code Snippets
+        </div>
+        <div style={{ padding: "14px 16px" }}>
+          <CodeSnippetViewer snippets={request.code_snippets} />
+        </div>
       </div>
 
-      {/* Execute button */}
-      <button
-        onClick={() => onExecute(request)}
-        disabled={isExecuting}
-        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#00E5CC] text-black font-display font-semibold text-sm hover:bg-[#00cbb5] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-      >
-        {isExecuting ? (
-          <>
-            <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-            Sending…
-          </>
-        ) : (
-          <>
-            <Send size={14} />
-            Send Request
-          </>
-        )}
-      </button>
+      {/* ── Send Button ───────────────────────────────────── */}
+      <div style={{ padding: "14px 16px" }}>
+        <button
+          onClick={() => onExecute(request)}
+          disabled={isExecuting}
+          className="rc-send-btn"
+        >
+          {isExecuting ? (
+            <>
+              <span className="rc-spinner" style={{ borderTopColor: "#fff" }} />
+              Sending…
+            </>
+          ) : (
+            <>
+              <Send size={14} />
+              Send Request
+            </>
+          )}
+        </button>
+      </div>
+
     </div>
   );
 }

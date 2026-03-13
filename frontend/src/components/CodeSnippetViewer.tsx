@@ -12,20 +12,20 @@ interface Props {
 }
 
 const LANG_MAP: Record<SnippetLang, string> = {
-  curl: "shell",
-  python: "python",
+  curl:       "shell",
+  python:     "python",
   javascript: "javascript",
 };
 
 const TABS: { key: SnippetLang; label: string }[] = [
-  { key: "curl", label: "cURL" },
-  { key: "python", label: "Python" },
+  { key: "curl",       label: "cURL"       },
+  { key: "python",     label: "Python"     },
   { key: "javascript", label: "JavaScript" },
 ];
 
 export function CodeSnippetViewer({ snippets }: Props) {
-  const [active, setActive] = useState<SnippetLang>("curl");
-  const [copied, setCopied] = useState(false);
+  const [active, setActive]   = useState<SnippetLang>("curl");
+  const [copied, setCopied]   = useState(false);
 
   const code = snippets[active];
 
@@ -36,48 +36,72 @@ export function CodeSnippetViewer({ snippets }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-white/10 overflow-hidden bg-[#0d0d0d]">
-      {/* Tab bar */}
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-        <div className="flex gap-1">
+    <div style={{
+      border: "1px solid var(--border)", borderRadius: "10px",
+      overflow: "hidden", background: "var(--surface)",
+    }}>
+
+      {/* ── Tab bar ─────────────────────────────────────── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderBottom: "1px solid var(--border)",
+        padding: "0 12px",
+        background: "var(--surface2)",
+      }}>
+
+        {/* Language tabs */}
+        <div style={{ display: "flex" }}>
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setActive(t.key)}
-              className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-all ${
-                active === t.key
-                  ? "bg-[#00E5CC]/10 text-[#00E5CC] border border-[#00E5CC]/30"
-                  : "text-white/40 hover:text-white/70"
-              }`}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: "0.65rem", fontWeight: 500,
+                padding: "9px 11px",
+                border: "none", borderBottom: `2px solid ${active === t.key ? "var(--accent)" : "transparent"}`,
+                borderTop: "none", borderLeft: "none", borderRight: "none",
+                background: "transparent",
+                color: active === t.key ? "var(--accent)" : "var(--soft)",
+                cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+              }}
             >
               {t.label}
             </button>
           ))}
         </div>
+
+        {/* Copy button */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-white/50 hover:text-white hover:bg-white/5 transition-all font-mono"
+          style={{
+            display: "flex", alignItems: "center", gap: "5px",
+            fontFamily: "var(--font-mono)", fontSize: "0.6rem", fontWeight: 600,
+            padding: "3px 9px", borderRadius: "5px", border: "1px solid var(--border2)",
+            background: copied ? "rgba(122,171,138,0.15)" : "var(--sand)",
+            color: copied ? "#4a8a60" : "var(--muted)",
+            cursor: "pointer", transition: "all 0.15s",
+          }}
         >
           {copied ? (
             <>
-              <Check size={12} className="text-emerald-400" />
-              <span className="text-emerald-400">Copied</span>
+              <Check size={11} />
+              Copied
             </>
           ) : (
             <>
-              <Copy size={12} />
+              <Copy size={11} />
               Copy
             </>
           )}
         </button>
       </div>
 
-      {/* Editor */}
+      {/* ── Monaco editor (light theme) ──────────────────── */}
       <Editor
         height="200px"
         language={LANG_MAP[active]}
         value={code}
-        theme="vs-dark"
+        theme="light"
         options={{
           readOnly: true,
           minimap: { enabled: false },

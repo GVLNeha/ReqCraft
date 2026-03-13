@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 import { Clock } from "lucide-react";
-import { StatusBadge } from "./StatusBadge";
 import type { ExecuteResponse } from "../types";
 
 interface Props {
@@ -9,6 +8,27 @@ interface Props {
 }
 
 type ViewTab = "body" | "headers";
+
+function StatusBadge({ code }: { code: number }) {
+  const ok = code >= 200 && code < 300;
+  const redirect = code >= 300 && code < 400;
+  const color = ok ? "#4a8a60" : redirect ? "#a07850" : "#a05048";
+  const bg   = ok
+    ? "rgba(122,171,138,0.18)"
+    : redirect
+    ? "rgba(245,201,168,0.3)"
+    : "rgba(196,116,106,0.15)";
+
+  return (
+    <span style={{
+      fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700,
+      padding: "3px 10px", borderRadius: "6px",
+      background: bg, color,
+    }}>
+      {code}
+    </span>
+  );
+}
 
 export function ResponseViewer({ response }: Props) {
   const [tab, setTab] = useState<ViewTab>("body");
@@ -18,27 +38,35 @@ export function ResponseViewer({ response }: Props) {
       ? response.body
       : JSON.stringify(response.body, null, 2);
 
+  const isOk = response.status_code >= 200 && response.status_code < 300;
+
   return (
-    <div className="rounded-xl border border-white/10 overflow-hidden bg-[#0d0d0d]">
-      {/* Status bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <StatusBadge code={response.status_code} />
-          <div className="flex items-center gap-1.5 text-xs text-white/40 font-mono">
-            <Clock size={11} />
-            {response.elapsed_ms}ms
-          </div>
-        </div>
-        <div className="flex gap-1">
+    <div className="rc-panel">
+
+      {/* ── Status bar ────────────────────────────────────── */}
+      <div className="rc-status-bar">
+        <div className={`rc-status-dot ${isOk ? "ok" : "err"}`} />
+        <StatusBadge code={response.status_code} />
+        <span style={{ display: "flex", alignItems: "center", gap: "5px", color: "var(--soft)", fontSize: "0.68rem" }}>
+          <Clock size={11} />
+          {response.elapsed_ms}ms
+        </span>
+
+        {/* Tab switcher */}
+        <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
           {(["body", "headers"] as ViewTab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-3 py-1 rounded-md text-xs font-mono capitalize transition-all ${
-                tab === t
-                  ? "bg-white/10 text-white"
-                  : "text-white/40 hover:text-white/60"
-              }`}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: "0.65rem",
+                padding: "3px 10px", borderRadius: "6px", border: "none", cursor: "pointer",
+                background: tab === t ? "var(--sand)" : "transparent",
+                color: tab === t ? "var(--text)" : "var(--soft)",
+                fontWeight: tab === t ? 600 : 400,
+                transition: "all 0.15s",
+                textTransform: "capitalize",
+              }}
             >
               {t}
             </button>
@@ -46,13 +74,13 @@ export function ResponseViewer({ response }: Props) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Body tab ──────────────────────────────────────── */}
       {tab === "body" ? (
         <Editor
-          height="260px"
+          height="280px"
           language="json"
           value={bodyStr}
-          theme="vs-dark"
+          theme="light"
           options={{
             readOnly: true,
             minimap: { enabled: false },
@@ -68,15 +96,21 @@ export function ResponseViewer({ response }: Props) {
           }}
         />
       ) : (
-        <div className="px-4 py-3 space-y-1.5 max-h-[260px] overflow-y-auto">
+        /* ── Headers tab ──────────────────────────────────── */
+        <div style={{
+          padding: "12px 16px",
+          maxHeight: "280px", overflowY: "auto",
+          display: "flex", flexDirection: "column", gap: "8px",
+        }}>
           {Object.entries(response.headers).map(([k, v]) => (
-            <div key={k} className="flex gap-3 font-mono text-xs">
-              <span className="text-[#00E5CC]/70 min-w-[200px] shrink-0">{k}</span>
-              <span className="text-white/50 break-all">{v}</span>
+            <div key={k} style={{ display: "flex", gap: "12px", fontFamily: "var(--font-mono)", fontSize: "0.72rem" }}>
+              <span style={{ color: "var(--accent)", minWidth: "200px", flexShrink: 0 }}>{k}</span>
+              <span style={{ color: "var(--muted)", wordBreak: "break-all" }}>{v}</span>
             </div>
           ))}
         </div>
       )}
+
     </div>
   );
 }

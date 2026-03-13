@@ -26,14 +26,14 @@ export default function App() {
 
   const { history, addEntry, clearHistory } = useHistory();
 
-  // Shareable link: load query from URL on mount
+  // ── Shareable link: load query from URL on mount ──────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("query");
     if (q) setDescription(decodeURIComponent(q));
   }, []);
 
-  // Update URL when description changes
+  // ── Update URL when description changes ───────────────────────
   useEffect(() => {
     const url = new URL(window.location.href);
     if (description.trim()) {
@@ -44,6 +44,7 @@ export default function App() {
     window.history.replaceState(null, "", url.toString());
   }, [description]);
 
+  // ── Handlers (unchanged) ──────────────────────────────────────
   const handleGenerate = async () => {
     if (!description.trim()) return;
     setIsGenerating(true);
@@ -82,77 +83,59 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white font-display">
-      {/* Subtle grid background */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
+    <div className="rc-root">
+      <div className="rc-shell">
 
-      {/* Glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#00E5CC]/40 to-transparent" />
-
-      <div className="relative max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="mb-10">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#00E5CC]/10 border border-[#00E5CC]/20">
-              <Zap size={16} className="text-[#00E5CC]" />
+        {/* ── HEADER ─────────────────────────────────────────── */}
+        <header className="rc-header">
+          <div className="rc-logo">
+            <div className="rc-logo-mark">
+              <Zap size={15} style={{ color: "#c8764a" }} />
             </div>
-            <h1 className="text-xl font-bold tracking-tight">
-              Req<span className="text-[#00E5CC]">Craft</span>
-            </h1>
+            Req<span className="rc-logo-dot">Craft</span>
           </div>
-          <p className="text-white/40 text-sm max-w-md">
-            Describe an HTTP request in plain English. Get method, URL, headers, body and code snippets instantly.
+          <p className="rc-tagline">
+            Describe an HTTP request in plain English. Get method, URL, headers,
+            body and code snippets instantly.
           </p>
         </header>
 
-        {/* Input area */}
-        <div className="mb-6">
-          <div className="relative">
+        {/* ── INPUT ──────────────────────────────────────────── */}
+        <div className="rc-input-section">
+          <label className="rc-label">Describe your request</label>
+
+          <div className="rc-textarea-wrap">
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleGenerate();
               }}
-              placeholder="Describe your HTTP request…"
+              placeholder="e.g. POST /api/users with name and email…"
               rows={3}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/20 font-mono resize-none focus:outline-none focus:border-[#00E5CC]/40 focus:bg-white/[0.05] transition-all"
+              className="rc-textarea"
             />
-            <div className="absolute bottom-3 right-3">
-              <kbd className="text-[10px] font-mono text-white/20 border border-white/10 px-1.5 py-0.5 rounded">
-                ⌘↵
-              </kbd>
-            </div>
+            <span className="rc-kbd">⌘↵</span>
           </div>
 
-          {/* Examples */}
-          <div className="flex flex-wrap gap-2 mt-3">
+          {/* Example pills */}
+          <div className="rc-examples">
             {EXAMPLES.map((ex) => (
-              <button
-                key={ex}
-                onClick={() => setDescription(ex)}
-                className="text-xs font-mono px-2.5 py-1 rounded-lg border border-white/10 text-white/35 hover:text-white/60 hover:border-white/20 transition-all"
-              >
+              <button key={ex} className="rc-pill" onClick={() => setDescription(ex)}>
                 {ex}
               </button>
             ))}
           </div>
 
+          {/* Generate button */}
           <button
             onClick={handleGenerate}
             disabled={isGenerating || !description.trim()}
-            className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00E5CC] text-black font-semibold text-sm hover:bg-[#00cbb5] disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+            className="rc-generate-btn"
           >
             {isGenerating ? (
               <>
-                <span className="w-3.5 h-3.5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                <span className="rc-spinner" />
                 Generating…
               </>
             ) : (
@@ -164,63 +147,56 @@ export default function App() {
           </button>
         </div>
 
-        {/* Error */}
+        {/* ── ERROR ──────────────────────────────────────────── */}
         {error && (
-          <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 mb-6">
-            <AlertCircle size={15} className="text-red-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-red-300 font-mono">{error}</p>
+          <div className="rc-error">
+            <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-5 border-b border-white/10 pb-0">
+        {/* ── TABS ───────────────────────────────────────────── */}
+        <div className="rc-tabs">
           <button
+            className={`rc-tab ${tab === "builder" ? "active" : ""}`}
             onClick={() => setTab("builder")}
-            className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-all ${
-              tab === "builder"
-                ? "border-[#00E5CC] text-[#00E5CC]"
-                : "border-transparent text-white/40 hover:text-white/60"
-            }`}
           >
             Builder
           </button>
           <button
+            className={`rc-tab ${tab === "history" ? "active" : ""}`}
             onClick={() => setTab("history")}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-all ${
-              tab === "history"
-                ? "border-[#00E5CC] text-[#00E5CC]"
-                : "border-transparent text-white/40 hover:text-white/60"
-            }`}
           >
             <History size={13} />
             History
             {history.length > 0 && (
-              <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full">{history.length}</span>
+              <span className="rc-tab-badge">{history.length}</span>
             )}
           </button>
         </div>
 
-        {/* Main content */}
+        {/* ── MAIN CONTENT ───────────────────────────────────── */}
         {tab === "builder" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Left: Request */}
+          <div className="rc-grid">
+
+            {/* Left: Generated Request */}
             <div>
               {request ? (
-                <div>
-                  <h2 className="text-xs font-mono text-white/30 uppercase tracking-widest mb-3">
-                    Generated Request
-                  </h2>
+                <>
+                  <p className="rc-section-label">Generated Request</p>
                   <RequestPanel
                     request={request}
                     onExecute={handleExecute}
                     isExecuting={isExecuting}
                   />
-                </div>
+                </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-white/20 border border-white/5 rounded-xl">
-                  <Sparkles size={24} className="mb-3 opacity-50" />
-                  <p className="text-sm font-mono">No request generated yet.</p>
-                  <p className="text-xs mt-1">Describe one above and hit Generate.</p>
+                <div className="rc-empty">
+                  <div className="rc-empty-icon">
+                    <Sparkles size={26} />
+                  </div>
+                  <p>No request generated yet.</p>
+                  <small>Describe one above and hit Generate.</small>
                 </div>
               )}
             </div>
@@ -228,19 +204,19 @@ export default function App() {
             {/* Right: Response */}
             <div>
               {response ? (
-                <div>
-                  <h2 className="text-xs font-mono text-white/30 uppercase tracking-widest mb-3">
-                    Response
-                  </h2>
+                <>
+                  <p className="rc-section-label">Response</p>
                   <ResponseViewer response={response} />
-                </div>
+                </>
               ) : request ? (
-                <div className="flex flex-col items-center justify-center py-20 text-white/20 border border-white/5 rounded-xl">
-                  <p className="text-sm font-mono">No response yet.</p>
-                  <p className="text-xs mt-1">Click "Send Request" to execute.</p>
+                <div className="rc-empty">
+                  <div className="rc-empty-icon">✉️</div>
+                  <p>No response yet.</p>
+                  <small>Click "Send Request" to execute.</small>
                 </div>
               ) : null}
             </div>
+
           </div>
         ) : (
           <HistoryPanel
@@ -249,6 +225,7 @@ export default function App() {
             onClear={clearHistory}
           />
         )}
+
       </div>
     </div>
   );
